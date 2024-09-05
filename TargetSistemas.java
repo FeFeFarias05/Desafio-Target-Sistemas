@@ -3,8 +3,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Scanner;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
+import java.io.File;
+import java.io.IOException;
+
+
+
 public class TargetSistemas{
+    
+
 
         /*
         * 2) Dado a sequência de Fibonacci, onde se inicia por 0 e 1 e o próximo valor sempre será a soma dos 2 valores anteriores
@@ -46,38 +58,74 @@ public class TargetSistemas{
          * • O maior valor de faturamento ocorrido em um dia do mês;
          * • Número de dias no mês em que o valor de faturamento diário foi superior à média mensal.
         */
-        static void dadosFaturamento(ArrayList<Double> lista){
-            double menor = lista.get(0);
-            for(int i = 0; i < lista.size(); i++){
-                if(lista.get(i) < menor){
-                    menor = lista.get(i);
+        public static List<FaturamentoDiario> lerXML(String filePath) {
+            List<FaturamentoDiario> faturamentoDiarioList = new ArrayList<>();
+            
+            try {
+                File file = new File(filePath);
+                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+                Document document = documentBuilder.parse(file);
+                document.getDocumentElement().normalize();
+                NodeList nodeList = document.getElementsByTagName("row");
+                
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    Node node = nodeList.item(i);
+                    
+                    if (node.getNodeType() == Node.ELEMENT_NODE) {
+                        Element element = (Element) node;
+                        int dia = Integer.parseInt(element.getElementsByTagName("dia").item(0).getTextContent());
+                        double valor = Double.parseDouble(element.getElementsByTagName("valor").item(0).getTextContent());
+                        faturamentoDiarioList.add(new FaturamentoDiario(dia, valor));
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+    
+            return faturamentoDiarioList;
+        }
+        
+        static void dadosFaturamento() {
+            List<FaturamentoDiario> faturamentoDiarioList = lerXML("dados.xml");
+            double menor = faturamentoDiarioList.get(0).getValor();
+            double maior = faturamentoDiarioList.get(0).getValor();
+            int count = 0;
+            double soma = 0;
+            int tamanho = 0; // Para contar o tamanho da lista sem os valores zerados
+
+            for (FaturamentoDiario item : faturamentoDiarioList) {
+                if (item.getValor() == 0.0000) {
+                    continue; // Pula os dias de feriados ou finais de semana com valor de faturamento igual a 0
+                }
+
+                if (item.getValor() < menor) {
+                    menor = item.getValor();
+                }
+
+                if (item.getValor() > maior) {
+                    maior = item.getValor();
+                }
+
+                soma += item.getValor();
+                tamanho++;
+            }
+
+            double media = soma / tamanho;
+
+            for (FaturamentoDiario item : faturamentoDiarioList) {
+                if (item.getValor() == 0.0000) {
+                    continue; 
+                }
+
+                if (item.getValor() > media) {
+                    count++;
                 }
             }
 
             System.out.println("O menor valor de faturamento ocorrido em um dia do mês é: " + menor);
-
-            double maior = lista.get(0);
-            for(int j = 0; j < lista.size(); j++){
-                if(lista.get(j) > maior){
-                    maior = lista.get(j);
-                }
-            }
             System.out.println("O maior valor de faturamento ocorrido em um dia do mês é: " + maior);
-
-            double media = 0;
-            for(int k= 0; k < lista.size(); k++){
-                media += lista.get(k);
-            }
-            media = media / lista.size();
-
             System.out.println(String.format("A média de faturamento mensal é: %.2f", media));
-
-            int count = 0;
-            for(int l = 0; l < lista.size(); l++){
-                if(lista.get(l) > media){
-                    count++;
-                }
-            }
             System.out.println("Número de dias no mês em que o valor de faturamento diário foi superior à média mensal é: " + count);
         }
         
@@ -119,16 +167,11 @@ public class TargetSistemas{
         int num = t.nextInt();
         pertenceFibonacci(num);
 
+        
+
         System.out.println("==============================================");
-        ArrayList<Double> faturamentoMensal = new ArrayList<>();
-        faturamentoMensal.add(1800.25);
-        faturamentoMensal.add(1000.8);
-        faturamentoMensal.add(1800.75);
-        faturamentoMensal.add(2150.0);
-        faturamentoMensal.add(1900.25);
-        faturamentoMensal.add(2900.0);
-        faturamentoMensal.add(3900.0);
-        dadosFaturamento(faturamentoMensal);
+        
+        dadosFaturamento();
 
         System.out.println("==============================================");
         
